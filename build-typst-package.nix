@@ -3,14 +3,12 @@
 }:
 
 let
-  cleanAttrs = lib.flip lib.removeAttrs [
-  ];
+  cleanAttrs = lib.flip lib.removeAttrs [];
 
   buildTypstPackage =
     {
-      nativeBuildInputs ? [ ],
-      buildInputs ? [ ],
-      typstDeps ? [ ],
+      nativeBuildInputs ? [],
+      buildInputs ? [],
       meta ? {},
       ...
     }@attrs: (let

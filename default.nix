@@ -8,16 +8,16 @@ let
     callPackage = lib.callPackageWith (pkgs // { inherit buildTypstPackage; });
   };
 
-  typstWithPackages = withPackages:
+  typstWithPackages = lib.makeOverridable ({...}@typstPkgs: f:
     let
-      paths = withPackages typstPackages;
+      paths = f typstPkgs;
     in
       buildEnv {
         name = "${typst.name}-env";
 
         inherit paths;
 
-        nativeBuildInputs = [ makeWrapper ];
+        nativeBuildInputs = [ makeBinaryWrapper ];
 
         postBuild = ''
           export _XDG_CACHE_HOME="$out/lib/"
@@ -33,11 +33,11 @@ let
 
           makeWrapper "${typst}/bin/typst" "$out/bin/typst" --set XDG_CACHE_HOME $_XDG_CACHE_HOME
         '';
-      };
+      }) typstPackages;
 
   typstVanilla = typstWithPackages [];
 in {
-  inherit typstWithPackages buildTypstPackage;
+  inherit typstWithPackages buildTypstPackage typstPackages;
 
   typst = typstVanilla;
 }
