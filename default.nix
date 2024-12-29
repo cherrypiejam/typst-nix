@@ -1,26 +1,43 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> {}}:
 
 with pkgs;
 
 let
-  typstPackages = import ./typst-packages.nix { packages = [ "polylux" ]; };
-in
-stdenvNoCC.mkDerivation {
-  pname = "bridge-slides";
-  version = "0.1";
+  buildTypstPackage = callPackage ./build-typst-package.nix {};
+  typstPackages = callPackage ./modules {
+    callPackage = lib.callPackageWith (pkgs // { inherit buildTypstPackage; });
+  };
 
-  src = ./.;
+  typstWithPackages = withPackages:
+    let
+      paths = withPackages typstPackages;
+    in
+      buildEnv {
+        name = "${typst.name}-env";
 
-  nativeBuildInputs = [ typst typstPackages ];
+        inherit paths;
 
-  buildPhase = ''
-    export XDG_CACHE_HOME="$(readlink -f .)/xdg_cache_dir/"
-    mkdir -p $XDG_CACHE_HOME/typst/packages
-    ln -s ${typstPackages} $XDG_CACHE_HOME/typst/packages/preview
-    typst compile slides.typ
-  '';
+        nativeBuildInputs = [ makeWrapper ];
 
-  installPhase = ''
-    cp slides.pdf $out
-  '';
+        postBuild = ''
+          export _XDG_CACHE_HOME="$out/lib/"
+          export TYPST_LIB="$_XDG_CACHE_HOME/typst/packages/preview"
+          mkdir -p $TYPST_LIB
+
+          for path in $(find $out -type l); do
+            mv $path $TYPST_LIB
+          done
+
+          cp -r ${typst}/share $out/share
+          mkdir -p $out/bin
+
+          makeWrapper "${typst}/bin/typst" "$out/bin/typst" --set XDG_CACHE_HOME $_XDG_CACHE_HOME
+        '';
+      };
+
+  typstVanilla = typstWithPackages [];
+in {
+  inherit typstWithPackages buildTypstPackage;
+
+  typst = typstVanilla;
 }
