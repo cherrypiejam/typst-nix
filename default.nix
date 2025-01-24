@@ -4,7 +4,7 @@ with pkgs;
 
 let
   buildTypstPackage = callPackage ./build-typst-package.nix {};
-  typstPackages = callPackage ./modules {
+  typstPackages = callPackage ./typst-packages.nix {
     callPackage = lib.callPackageWith (pkgs // { inherit buildTypstPackage; });
   };
 
