@@ -1,0 +1,4 @@
+Does not build.
+
+See https://github.com/NixOS/nixpkgs/pull/369283 for up-to-date
+changes.
